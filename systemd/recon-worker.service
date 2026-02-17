@@ -1,0 +1,18 @@
+[Unit]
+Description=Recon Core Worker
+After=network.target
+
+[Service]
+Type=simple
+User=kali
+WorkingDirectory=/opt/recon-core
+Environment=RECON_ROOT=/opt/recon-core
+EnvironmentFile=/opt/recon-core/.env
+ExecStart=/usr/bin/python3 -m runner.worker
+Restart=always
+RestartSec=5
+StandardOutput=append:/opt/recon-core/logs/system.log
+StandardError=append:/opt/recon-core/logs/errors.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+name: deep
+description: coleta extensa e mais demorada
+options:
+  ports:
+    enabled: true
+    full_scan: true
+  urls:
+    deep_sources: true

@@ -1,0 +1,16 @@
+app:
+  recon_root: /opt/recon-core
+
+telegram:
+  # Configure aqui o token do seu bot Telegram.
+  # Exemplo: 123456789:AA...
+  bot_token: ""
+
+worker:
+  poll_seconds: 15
+
+paths:
+  sqlite: /opt/recon-core/storage/history.sqlite
+  scope: /opt/recon-core/config/scope.txt
+  tools: /opt/recon-core/config/tools.yml
+  profiles: /opt/recon-core/config/profiles

@@ -1,0 +1,9 @@
+max_concurrent_jobs: 1
+default_timeout_seconds: 1800
+module_timeouts:
+  dns: 120
+  subdomains: 300
+  alive: 180
+  stack: 180
+  urls: 300
+  ports: 600

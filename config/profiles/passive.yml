@@ -1,0 +1,7 @@
+name: passive
+description: coleta leve sem scans agressivos
+options:
+  subdomains:
+    sources: [subfinder, assetfinder]
+  ports:
+    enabled: false
