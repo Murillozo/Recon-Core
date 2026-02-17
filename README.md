@@ -4,15 +4,7 @@ Automação modular de recon com bot Telegram + worker em fila SQLite.
 
 ## Instalação rápida
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-export TELEGRAM_BOT_TOKEN="<token>"
-export RECON_ROOT="$(pwd)"
-```
 
-## Uso
 
 1. Inicie bot: `python3 -m bot.controller`
 2. Em outro terminal inicie worker: `python3 -m runner.worker`

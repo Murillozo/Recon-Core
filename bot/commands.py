@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import ipaddress
-import os
+
 import re
 import sqlite3
 from pathlib import Path
 from typing import Iterable
+
 
 DOMAIN_RE = re.compile(
     r"^(?=.{1,253}$)(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$"
@@ -96,10 +97,5 @@ def enqueue_job(
 
 
 def environment_paths() -> dict[str, Path]:
-    root = Path(os.getenv("RECON_ROOT", Path(__file__).resolve().parents[1]))
-    return {
-        "root": root,
-        "scope": root / "config" / "scope.txt",
-        "config": root / "config",
-        "db": root / "storage" / "history.sqlite",
+
     }

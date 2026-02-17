@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
+
 import time
 from pathlib import Path
 
 from bot.commands import environment_paths, init_db
+
 from bot.notifier import notify_job_update
 from runner.scheduler import JobQueue, initialize_summary, load_summary, make_run_dir, run_modules
 
@@ -54,13 +55,7 @@ async def process_once(queue: JobQueue, root: Path, token: str | None) -> bool:
 
 
 def main() -> None:
-    root = Path(os.getenv("RECON_ROOT", Path(__file__).resolve().parents[1]))
-    paths = environment_paths()
-    init_db(paths["db"])
-    queue = JobQueue(paths["db"])
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
 
-    poll_seconds = int(os.getenv("WORKER_POLL_SECONDS", "15"))
     logger.info("Recon worker started with poll=%ss", poll_seconds)
 
     while True:
