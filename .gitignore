@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+storage/recon/*
+!storage/recon/.gitkeep
+.env
+.pytest_cache/

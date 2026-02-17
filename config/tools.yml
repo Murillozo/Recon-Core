@@ -1,0 +1,16 @@
+tools:
+  dns:
+    primary: dig
+  subdomains:
+    primary: subfinder
+    fallback: assetfinder
+  alive:
+    primary: httpx
+  fingerprint:
+    primary: curl
+  urls:
+    primary: gau
+    fallback: waybackurls
+  ports:
+    primary: naabu
+    fallback: nmap

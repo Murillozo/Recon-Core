@@ -1,0 +1,6 @@
+name: balanced
+description: equilíbrio entre cobertura e velocidade
+options:
+  ports:
+    enabled: true
+    top_ports: 100

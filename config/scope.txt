@@ -1,0 +1,2 @@
+# Allowed targets. Use * for lab/all.
+*
