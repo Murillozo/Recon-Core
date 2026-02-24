@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 
+
 @dataclass
 class Job:
     id: int
@@ -113,6 +114,11 @@ def run_modules(root: Path, domain: str, profile: str, run_dir: Path, summary_pa
     profile_file = root / "config" / "profiles" / f"{profile}.yml"
     tools_file = root / "config" / "tools.yml"
     modules = module_scripts(root, profile_file)
+
+def run_modules(root: Path, domain: str, profile: str, run_dir: Path, summary_path: Path) -> None:
+    modules = sorted((root / "modules").glob("*.sh"))
+    profile_file = root / "config" / "profiles" / f"{profile}.yml"
+    tools_file = root / "config" / "tools.yml"
 
     for script in modules:
         cmd = [

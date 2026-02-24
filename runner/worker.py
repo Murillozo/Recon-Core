@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+
 import time
 from pathlib import Path
 
 from bot.commands import environment_paths, init_db
 from recon_settings import load_settings
+=======
+
 from bot.notifier import notify_job_update
 from runner.scheduler import JobQueue, initialize_summary, load_summary, make_run_dir, run_modules
 
@@ -62,6 +65,8 @@ def main() -> None:
     token = settings.telegram_bot_token
 
     poll_seconds = settings.worker_poll_seconds
+
+
     logger.info("Recon worker started with poll=%ss", poll_seconds)
 
     while True:

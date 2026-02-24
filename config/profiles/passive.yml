@@ -7,3 +7,9 @@ modules:
   - 05_urls.sh
   - 07_js.sh
   - 99_report.sh
+description: coleta leve sem scans agressivos
+options:
+  subdomains:
+    sources: [subfinder, assetfinder]
+  ports:
+    enabled: false
