@@ -1,0 +1,9 @@
+name: passive
+description: coleta leve focada em enumeração e histórico
+modules:
+  - 01_dns.sh
+  - 02_subdomains.sh
+  - 03_alive.sh
+  - 05_urls.sh
+  - 07_js.sh
+  - 99_report.sh

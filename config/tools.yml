@@ -1,0 +1,23 @@
+tools:
+  dns:
+    primary: dig
+    alternatives: [dnsx]
+  subdomains:
+    primary: subfinder
+    alternatives: [findomain, assetfinder, knock, puredns]
+  alive:
+    primary: httpx
+    alternatives: [hakcheckurl]
+  urls:
+    primary: gauplus
+    alternatives: [gau, waybackurls, xurlfind3r]
+  javascript:
+    primary: subjs
+  xss:
+    helpers: [gf, uro, qsreplace, airixss, freq]
+  vuln_scan:
+    primary: nuclei
+  ip_intel:
+    primary: sdlookup
+  crawler:
+    alternatives: [hakrawler, photon, paramspider]

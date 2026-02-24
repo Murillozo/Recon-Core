@@ -1,0 +1,14 @@
+name: deep
+description: cobertura mais ampla com validações adicionais
+modules:
+  - 01_dns.sh
+  - 02_subdomains.sh
+  - 03_alive.sh
+  - 04_stack.sh
+  - 05_urls.sh
+  - 06_ports.sh
+  - 07_js.sh
+  - 08_vulns.sh
+  - 09_sdlookup.sh
+  - 10_xss_candidates.sh
+  - 99_report.sh
