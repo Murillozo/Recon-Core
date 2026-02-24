@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-
 from pathlib import Path
 
 from telegram import Update
@@ -17,7 +16,7 @@ from bot.commands import (
     load_scope,
     validate_domain,
 )
-
+from recon_settings import load_settings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -69,7 +68,8 @@ async def site(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def main() -> None:
-
+    settings = load_settings()
+    token = settings.telegram_bot_token
     if not token:
         raise RuntimeError("Set TELEGRAM_BOT_TOKEN before running bot")
 
