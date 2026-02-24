@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 
 from bot.commands import environment_paths, init_db
+from recon_settings import load_settings
+=======
 
 from bot.notifier import notify_job_update
 from runner.scheduler import JobQueue, initialize_summary, load_summary, make_run_dir, run_modules
@@ -55,6 +57,15 @@ async def process_once(queue: JobQueue, root: Path, token: str | None) -> bool:
 
 
 def main() -> None:
+    settings = load_settings()
+    root = settings.recon_root
+    paths = environment_paths()
+    init_db(paths["db"])
+    queue = JobQueue(paths["db"])
+    token = settings.telegram_bot_token
+
+    poll_seconds = settings.worker_poll_seconds
+
 
     logger.info("Recon worker started with poll=%ss", poll_seconds)
 

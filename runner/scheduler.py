@@ -8,6 +8,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+import yaml
+
+
 
 @dataclass
 class Job:
@@ -79,6 +82,38 @@ def initialize_summary(summary_path: Path, domain: str, profile: str, job_id: in
     }
     summary_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
+
+def _load_profile(profile_file: Path) -> dict:
+    if not profile_file.exists():
+        return {}
+    payload = yaml.safe_load(profile_file.read_text(encoding="utf-8")) or {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def module_scripts(root: Path, profile_file: Path) -> list[Path]:
+    profile_cfg = _load_profile(profile_file)
+    requested = profile_cfg.get("modules", [])
+
+    modules_dir = root / "modules"
+    if not requested:
+        return sorted(modules_dir.glob("*.sh"))
+
+    scripts: list[Path] = []
+    for module_name in requested:
+        script = modules_dir / module_name
+        if script.exists():
+            scripts.append(script)
+
+    report_script = modules_dir / "99_report.sh"
+    if report_script not in scripts and report_script.exists():
+        scripts.append(report_script)
+    return scripts
+
+
+def run_modules(root: Path, domain: str, profile: str, run_dir: Path, summary_path: Path) -> None:
+    profile_file = root / "config" / "profiles" / f"{profile}.yml"
+    tools_file = root / "config" / "tools.yml"
+    modules = module_scripts(root, profile_file)
 
 def run_modules(root: Path, domain: str, profile: str, run_dir: Path, summary_path: Path) -> None:
     modules = sorted((root / "modules").glob("*.sh"))

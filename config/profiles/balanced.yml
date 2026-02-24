@@ -1,6 +1,13 @@
 name: balanced
-description: equilíbrio entre cobertura e velocidade
-options:
-  ports:
-    enabled: true
-    top_ports: 100
+description: equilíbrio entre enumeração e validação
+modules:
+  - 01_dns.sh
+  - 02_subdomains.sh
+  - 03_alive.sh
+  - 04_stack.sh
+  - 05_urls.sh
+  - 06_ports.sh
+  - 07_js.sh
+  - 09_sdlookup.sh
+  - 10_xss_candidates.sh
+  - 99_report.sh
