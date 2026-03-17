@@ -25,6 +25,16 @@ logging.basicConfig(
 logger = logging.getLogger("recon-bot")
 
 
+def required_bot_token() -> str:
+    """Return configured Telegram token or raise a clear startup error."""
+    token = load_settings().telegram_bot_token
+    if not token:
+        raise RuntimeError(
+            "Set TELEGRAM_BOT_TOKEN or telegram.bot_token in config/app.yml before running bot"
+        )
+    return token
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Use: /site <dominio> <perfil>\nPerfis disponíveis: passive, balanced, deep"
@@ -68,10 +78,7 @@ async def site(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def main() -> None:
-    settings = load_settings()
-    token = settings.telegram_bot_token
-    if not token:
-        raise RuntimeError("Set TELEGRAM_BOT_TOKEN before running bot")
+    token = required_bot_token()
 
     paths = environment_paths()
     init_db(paths["db"])
