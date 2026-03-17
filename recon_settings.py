@@ -24,12 +24,20 @@ class AppSettings:
     profiles_dir: Path
 
 
-
 def _load_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     return data or {}
+
+
+def _resolve_path(raw_value: str | os.PathLike[str] | None, base: Path, default: Path) -> Path:
+    if raw_value in (None, ""):
+        return default
+    path = Path(raw_value)
+    if path.is_absolute():
+        return path
+    return (base / path).resolve()
 
 
 def load_settings() -> AppSettings:
@@ -44,14 +52,30 @@ def load_settings() -> AppSettings:
     worker_cfg = cfg.get("worker", {})
     paths_cfg = cfg.get("paths", {})
 
-    root = Path(app_cfg.get("recon_root", recon_root))
+    root = _resolve_path(app_cfg.get("recon_root"), base=recon_root, default=recon_root)
     token = tg_cfg.get("bot_token") or os.getenv("TELEGRAM_BOT_TOKEN")
     poll = int(worker_cfg.get("poll_seconds", os.getenv("WORKER_POLL_SECONDS", "15")))
 
-    sqlite_path = Path(paths_cfg.get("sqlite", root / "storage" / "history.sqlite"))
-    scope_file = Path(paths_cfg.get("scope", root / "config" / "scope.txt"))
-    tools_file = Path(paths_cfg.get("tools", root / "config" / "tools.yml"))
-    profiles_dir = Path(paths_cfg.get("profiles", root / "config" / "profiles"))
+    sqlite_path = _resolve_path(
+        paths_cfg.get("sqlite"),
+        base=root,
+        default=root / "storage" / "history.sqlite",
+    )
+    scope_file = _resolve_path(
+        paths_cfg.get("scope"),
+        base=root,
+        default=root / "config" / "scope.txt",
+    )
+    tools_file = _resolve_path(
+        paths_cfg.get("tools"),
+        base=root,
+        default=root / "config" / "tools.yml",
+    )
+    profiles_dir = _resolve_path(
+        paths_cfg.get("profiles"),
+        base=root,
+        default=root / "config" / "profiles",
+    )
 
     return AppSettings(
         recon_root=root,
