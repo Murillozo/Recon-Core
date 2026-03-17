@@ -1,5 +1,6 @@
 app:
-  recon_root: /opt/recon-core
+  # Caminho raiz para dados e configs. Se vazio, usa a pasta do projeto.
+  recon_root: ""
 
 telegram:
   # Configure aqui o token do seu bot Telegram.
@@ -10,7 +11,8 @@ worker:
   poll_seconds: 15
 
 paths:
-  sqlite: /opt/recon-core/storage/history.sqlite
-  scope: /opt/recon-core/config/scope.txt
-  tools: /opt/recon-core/config/tools.yml
-  profiles: /opt/recon-core/config/profiles
+  # Paths relativos ao recon_root para evitar problemas de permissão em /opt.
+  sqlite: storage/history.sqlite
+  scope: config/scope.txt
+  tools: config/tools.yml
+  profiles: config/profiles
