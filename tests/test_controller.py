@@ -54,8 +54,26 @@ def test_main_without_token_raises_runtime_error(monkeypatch):
 
 def test_main_with_token_starts_polling(monkeypatch):
     monkeypatch.setattr(controller, "load_settings", lambda: _settings("test-token"))
-    monkeypatch.setattr(controller, "environment_paths", lambda: {"db": Path("/tmp/db.sqlite"), "root": Path("/tmp")})
+    monkeypatch.setattr(
+        controller,
+        "environment_paths",
+        lambda: {"db": Path("/tmp/db.sqlite"), "root": Path("/tmp")},
+    )
     monkeypatch.setattr(controller, "init_db", lambda _db: None)
     monkeypatch.setattr(controller, "Application", _DummyApplication)
 
     controller.main()
+
+
+def test_single_instance_lock_raises_when_already_locked(monkeypatch, tmp_path):
+    lock_file = tmp_path / "bot.lock"
+
+    def _fake_flock(_fd, operation):
+        if operation == (controller.fcntl.LOCK_EX | controller.fcntl.LOCK_NB):
+            raise BlockingIOError("already locked")
+
+    monkeypatch.setattr(controller.fcntl, "flock", _fake_flock)
+
+    with pytest.raises(RuntimeError, match="already running"):
+        with controller.single_instance_lock(lock_file):
+            pass

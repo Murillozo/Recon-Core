@@ -96,6 +96,89 @@ def enqueue_job(
         return int(cursor.lastrowid)
 
 
+def cancel_job(db_path: Path, job_id: int, chat_id: int) -> tuple[bool, str]:
+    """Cancel a pending job that belongs to the provided chat."""
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT status, chat_id FROM jobs WHERE id=?",
+            (job_id,),
+        ).fetchone()
+        if not row:
+            return False, "not_found"
+
+        status, owner_chat_id = row
+        if int(owner_chat_id) != int(chat_id):
+            return False, "forbidden"
+
+        if status != "pending":
+            return False, status
+
+        conn.execute(
+            """
+            UPDATE jobs
+            SET status='canceled', finished_at=CURRENT_TIMESTAMP, error='Canceled by user'
+            WHERE id=?
+            """,
+            (job_id,),
+        )
+        conn.commit()
+        return True, "canceled"
+
+
+def get_job_for_chat(db_path: Path, job_id: int, chat_id: int) -> tuple[bool, dict[str, str] | str]:
+    """Return one job status if it belongs to the given chat."""
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            """
+            SELECT id, domain, profile, status, created_at, started_at, finished_at, chat_id
+            FROM jobs
+            WHERE id=?
+            """,
+            (job_id,),
+        ).fetchone()
+        if not row:
+            return False, "not_found"
+
+        if int(row[7]) != int(chat_id):
+            return False, "forbidden"
+
+        return True, {
+            "id": str(row[0]),
+            "domain": row[1],
+            "profile": row[2],
+            "status": row[3],
+            "created_at": row[4] or "-",
+            "started_at": row[5] or "-",
+            "finished_at": row[6] or "-",
+        }
+
+
+def list_recent_jobs_for_chat(db_path: Path, chat_id: int, limit: int = 5) -> list[dict[str, str]]:
+    """Return recent jobs for one chat ordered by newest first."""
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, domain, profile, status, created_at
+            FROM jobs
+            WHERE chat_id=?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (chat_id, limit),
+        ).fetchall()
+
+    return [
+        {
+            "id": str(row[0]),
+            "domain": row[1],
+            "profile": row[2],
+            "status": row[3],
+            "created_at": row[4] or "-",
+        }
+        for row in rows
+    ]
+
+
 def environment_paths() -> dict[str, Path]:
     settings = load_settings()
     return {
