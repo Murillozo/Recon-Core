@@ -9,8 +9,9 @@ OUT_JSON="$RUN_DIR/stack.json"
 if [ -f "$ALIVE" ] && [ -s "$ALIVE" ]; then
   while IFS= read -r line; do
     url="$(echo "$line" | awk '{print $1}')"
-    server="$(curl -skI "$url" | awk -F': ' 'tolower($1)=="server"{print $2}' | tr -d '\r')"
-    tech="$(curl -skI "$url" | awk -F': ' 'tolower($1)=="x-powered-by"{print $2}' | tr -d '\r')"
+    headers="$(curl -m 10 -skI "$url" || true)"
+    server="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="server"{print $2}' | tr -d '\r')"
+    tech="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="x-powered-by"{print $2}' | tr -d '\r')"
     echo "$url | server=${server:-unknown} | x-powered-by=${tech:-unknown}" >> "$OUT_TXT"
   done < "$ALIVE"
 fi
