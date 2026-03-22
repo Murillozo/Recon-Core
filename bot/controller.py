@@ -14,11 +14,13 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from bot.commands import (
     allowed_profiles,
     cancel_job,
+    delete_job,
     enqueue_job,
     environment_paths,
     get_job_for_chat,
     init_db,
     is_in_scope,
+    list_completed_jobs_for_chat,
     list_recent_jobs_for_chat,
     load_scope,
     validate_domain,
@@ -36,8 +38,10 @@ HELP_TEXT = (
     "*Comandos disponíveis*\n"
     "- `/site <dominio> <perfil>` cria um job\n"
     "- `/cancel <job_id>` cancela job pendente\n"
+    "- `/excluir <job_id>` exclui job (em andamento ou concluído) e apaga a pasta\n"
     "- `/status <job_id>` mostra status detalhado de um job\n"
     "- `/jobs` lista seus últimos jobs\n"
+    "- `/feitos` lista jobs concluídos com caminho da pasta\n"
     "- `/help` mostra esta ajuda\n\n"
     "Perfis: passive, balanced, deep"
 )
@@ -178,6 +182,33 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def excluir(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    args = context.args
+    if len(args) != 1 or not args[0].isdigit():
+        await update.message.reply_text("Formato inválido. Exemplo: /excluir 12")
+        return
+
+    job_id = int(args[0])
+    chat_id = update.effective_chat.id
+    paths = environment_paths()
+
+    deleted, reason, removed_paths = delete_job(paths["db"], paths["root"], job_id, chat_id)
+    if deleted:
+        lines = [f"Job {job_id} excluído com sucesso."]
+        if removed_paths:
+            lines.append("Pastas removidas:")
+            lines.extend(f"- {path}" for path in removed_paths)
+        else:
+            lines.append("Nenhuma pasta de artefatos encontrada para remover.")
+        await update.message.reply_text("\n".join(lines))
+        return
+
+    if reason == "not_found":
+        await update.message.reply_text(f"Job {job_id} não encontrado.")
+    else:
+        await update.message.reply_text("Você não pode excluir um job criado por outro chat.")
+
+
 async def jobs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     paths = environment_paths()
@@ -195,6 +226,24 @@ async def jobs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("\n".join(lines))
 
 
+async def feitos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.effective_chat.id
+    paths = environment_paths()
+    rows = list_completed_jobs_for_chat(paths["db"], chat_id, limit=10)
+
+    if not rows:
+        await update.message.reply_text("Você ainda não possui jobs concluídos.")
+        return
+
+    lines = ["Jobs concluídos:"]
+    for row in rows:
+        lines.append(
+            f"- ID {row['id']} | {row['domain']} | {row['profile']} | finalizado: {row['finished_at']}"
+        )
+        lines.append(f"  pasta: {row['run_dir']}")
+    await update.message.reply_text("\n".join(lines))
+
+
 def main() -> None:
     token = required_bot_token()
 
@@ -208,8 +257,10 @@ def main() -> None:
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("site", site))
     app.add_handler(CommandHandler("cancel", cancel))
+    app.add_handler(CommandHandler("excluir", excluir))
     app.add_handler(CommandHandler("status", status))
     app.add_handler(CommandHandler("jobs", jobs))
+    app.add_handler(CommandHandler("feitos", feitos))
 
     lock_file = logs_dir / "bot.controller.lock"
     with single_instance_lock(lock_file):
