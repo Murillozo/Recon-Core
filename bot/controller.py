@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import fcntl
+import html
 import logging
 import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import quote
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -237,11 +239,21 @@ async def feitos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     lines = ["Jobs concluídos:"]
     for row in rows:
+        run_dir = row["run_dir"]
+        escaped_run_dir = html.escape(run_dir)
+        run_dir_link = escaped_run_dir
+        if run_dir != "-":
+            run_dir_link = f'file://{quote(run_dir, safe="/:_-.")}'
+
         lines.append(
             f"- ID {row['id']} | {row['domain']} | {row['profile']} | finalizado: {row['finished_at']}"
         )
-        lines.append(f"  pasta: {row['run_dir']}")
-    await update.message.reply_text("\n".join(lines))
+        if run_dir == "-":
+            lines.append("  pasta: -")
+        else:
+            lines.append(f'  pasta: <a href="{run_dir_link}">{escaped_run_dir}</a>')
+            lines.append(f"  copiar: <code>{escaped_run_dir}</code>")
+    await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
 
 def main() -> None:
