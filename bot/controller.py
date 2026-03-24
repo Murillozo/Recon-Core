@@ -241,9 +241,6 @@ async def feitos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     for row in rows:
         run_dir = row["run_dir"]
         escaped_run_dir = html.escape(run_dir)
-        run_dir_link = escaped_run_dir
-        if run_dir != "-":
-            run_dir_link = f'file://{quote(run_dir, safe="/:_-.")}'
 
         lines.append(
             f"- ID {row['id']} | {row['domain']} | {row['profile']} | finalizado: {row['finished_at']}"
@@ -251,8 +248,8 @@ async def feitos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if run_dir == "-":
             lines.append("  pasta: -")
         else:
-            lines.append(f'  pasta: <a href="{run_dir_link}">{escaped_run_dir}</a>')
-            lines.append(f"  copiar: <code>{escaped_run_dir}</code>")
+            lines.append(f"  caminho: <code>{escaped_run_dir}</code>")
+            lines.append("  dica: segure/tap no caminho para copiar")
     await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
 
