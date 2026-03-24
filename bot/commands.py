@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ipaddress
 import re
+import shutil
 import sqlite3
 from pathlib import Path
 from typing import Iterable
@@ -125,6 +126,42 @@ def cancel_job(db_path: Path, job_id: int, chat_id: int) -> tuple[bool, str]:
         return True, "canceled"
 
 
+def delete_job(db_path: Path, recon_root: Path, job_id: int, chat_id: int) -> tuple[bool, str, list[str]]:
+    """Delete a job and remove matching artifact directories."""
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT chat_id, run_dir FROM jobs WHERE id=?",
+            (job_id,),
+        ).fetchone()
+        if not row:
+            return False, "not_found", []
+
+        owner_chat_id, run_dir = row
+        if int(owner_chat_id) != int(chat_id):
+            return False, "forbidden", []
+
+        candidates: list[Path] = []
+        if run_dir:
+            candidates.append(Path(run_dir))
+
+        recon_dir = recon_root / "storage" / "recon"
+        candidates.extend(recon_dir.glob(f"*_job{job_id}"))
+
+        removed_paths: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            key = str(candidate.resolve())
+            if key in seen or not candidate.exists() or not candidate.is_dir():
+                continue
+            shutil.rmtree(candidate)
+            removed_paths.append(key)
+            seen.add(key)
+
+        conn.execute("DELETE FROM jobs WHERE id=?", (job_id,))
+        conn.commit()
+        return True, "deleted", removed_paths
+
+
 def get_job_for_chat(db_path: Path, job_id: int, chat_id: int) -> tuple[bool, dict[str, str] | str]:
     """Return one job status if it belongs to the given chat."""
     with sqlite3.connect(db_path) as conn:
@@ -174,6 +211,32 @@ def list_recent_jobs_for_chat(db_path: Path, chat_id: int, limit: int = 5) -> li
             "profile": row[2],
             "status": row[3],
             "created_at": row[4] or "-",
+        }
+        for row in rows
+    ]
+
+
+def list_completed_jobs_for_chat(db_path: Path, chat_id: int, limit: int = 10) -> list[dict[str, str]]:
+    """Return completed jobs for one chat ordered by newest first."""
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, domain, profile, finished_at, run_dir
+            FROM jobs
+            WHERE chat_id=? AND status='completed'
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (chat_id, limit),
+        ).fetchall()
+
+    return [
+        {
+            "id": str(row[0]),
+            "domain": row[1],
+            "profile": row[2],
+            "finished_at": row[3] or "-",
+            "run_dir": row[4] or "-",
         }
         for row in rows
     ]
