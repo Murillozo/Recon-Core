@@ -8,6 +8,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import quote
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
