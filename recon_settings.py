@@ -16,6 +16,7 @@ import yaml
 @dataclass
 class AppSettings:
     recon_root: Path
+    recon_output_dir: Path
     telegram_bot_token: str | None
     worker_poll_seconds: int
     sqlite_path: Path
@@ -76,9 +77,15 @@ def load_settings() -> AppSettings:
         base=root,
         default=root / "config" / "profiles",
     )
+    recon_output_dir = _resolve_path(
+        paths_cfg.get("recon_output"),
+        base=root,
+        default=root / "storage" / "recon",
+    )
 
     return AppSettings(
         recon_root=root,
+        recon_output_dir=recon_output_dir,
         telegram_bot_token=token,
         worker_poll_seconds=poll,
         sqlite_path=sqlite_path,

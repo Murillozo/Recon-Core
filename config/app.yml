@@ -13,6 +13,7 @@ worker:
 paths:
   # Paths relativos ao recon_root para evitar problemas de permissão em /opt.
   sqlite: storage/history.sqlite
+  recon_output: storage/recon
   scope: config/scope.txt
   tools: config/tools.yml
   profiles: config/profiles

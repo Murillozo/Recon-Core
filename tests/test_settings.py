@@ -13,6 +13,7 @@ worker:
   poll_seconds: 42
 paths:
   sqlite: /tmp/recon/storage/history.sqlite
+  recon_output: /tmp/recon/storage/recon-custom
   scope: /tmp/recon/config/scope.txt
   tools: /tmp/recon/config/tools.yml
   profiles: /tmp/recon/config/profiles
@@ -26,6 +27,7 @@ paths:
     assert str(settings.recon_root) == "/tmp/recon"
     assert settings.telegram_bot_token == "test-token"
     assert settings.worker_poll_seconds == 42
+    assert str(settings.recon_output_dir) == "/tmp/recon/storage/recon-custom"
 
 
 def test_load_settings_with_relative_paths(tmp_path, monkeypatch):
@@ -39,6 +41,7 @@ app:
   recon_root: ""
 paths:
   sqlite: storage/history.sqlite
+  recon_output: storage/recon
   scope: config/scope.txt
   tools: config/tools.yml
   profiles: config/profiles
@@ -52,6 +55,7 @@ paths:
 
     assert settings.recon_root == project_root
     assert settings.sqlite_path == project_root / "storage" / "history.sqlite"
+    assert settings.recon_output_dir == project_root / "storage" / "recon"
     assert settings.scope_file == project_root / "config" / "scope.txt"
     assert settings.tools_file == project_root / "config" / "tools.yml"
     assert settings.profiles_dir == project_root / "config" / "profiles"

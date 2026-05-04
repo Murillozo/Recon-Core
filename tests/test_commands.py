@@ -86,7 +86,12 @@ def test_delete_job_removes_row_and_run_dir(tmp_path: Path):
     run_dir.mkdir(parents=True)
     (run_dir / "proof.txt").write_text("ok", encoding="utf-8")
 
-    deleted, reason, removed_paths = delete_job(db_path, tmp_path, job_id, 1234)
+    deleted, reason, removed_paths = delete_job(
+        db_path,
+        tmp_path / "storage" / "recon",
+        job_id,
+        1234,
+    )
 
     assert deleted is True
     assert reason == "deleted"

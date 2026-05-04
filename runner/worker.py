@@ -18,13 +18,13 @@ logging.basicConfig(
 logger = logging.getLogger("recon-worker")
 
 
-async def process_once(queue: JobQueue, root: Path, token: str | None) -> bool:
+async def process_once(queue: JobQueue, root: Path, recon_output_dir: Path, token: str | None) -> bool:
     job = queue.next_pending()
     if not job:
         return False
 
     logger.info("Processing job=%s domain=%s profile=%s", job.id, job.domain, job.profile)
-    run_dir = make_run_dir(root, job.domain, job.id)
+    run_dir = make_run_dir(recon_output_dir, job.domain, job.id)
     summary_path = run_dir / "summary.json"
     initialize_summary(summary_path, job.domain, job.profile, job.id)
 
@@ -56,6 +56,7 @@ async def process_once(queue: JobQueue, root: Path, token: str | None) -> bool:
 def main() -> None:
     settings = load_settings()
     root = settings.recon_root
+    recon_output_dir = settings.recon_output_dir
     init_db(settings.sqlite_path)
     queue = JobQueue(settings.sqlite_path)
     token = settings.telegram_bot_token
@@ -64,7 +65,7 @@ def main() -> None:
     logger.info("Recon worker started with poll=%ss", poll_seconds)
 
     while True:
-        processed = asyncio.run(process_once(queue, root, token))
+        processed = asyncio.run(process_once(queue, root, recon_output_dir, token))
         if not processed:
             time.sleep(poll_seconds)
 
