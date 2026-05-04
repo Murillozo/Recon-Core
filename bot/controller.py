@@ -194,7 +194,12 @@ async def excluir(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     paths = environment_paths()
 
-    deleted, reason, removed_paths = delete_job(paths["db"], paths["root"], job_id, chat_id)
+    deleted, reason, removed_paths = delete_job(
+        paths["db"],
+        paths["recon_output"],
+        job_id,
+        chat_id,
+    )
     if deleted:
         lines = [f"Job {job_id} excluído com sucesso."]
         if removed_paths:

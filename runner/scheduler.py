@@ -63,9 +63,9 @@ class JobQueue:
             conn.commit()
 
 
-def make_run_dir(root: Path, domain: str, job_id: int) -> Path:
+def make_run_dir(recon_output_dir: Path, domain: str, job_id: int) -> Path:
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    run_dir = root / "storage" / "recon" / f"{domain}_{ts}_job{job_id}"
+    run_dir = recon_output_dir / f"{domain}_{ts}_job{job_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
     return run_dir
 

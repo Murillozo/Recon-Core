@@ -36,6 +36,7 @@ def _settings(token: str | None) -> AppSettings:
     root = Path("/tmp/recon-core")
     return AppSettings(
         recon_root=root,
+        recon_output_dir=root / "storage" / "recon",
         telegram_bot_token=token,
         worker_poll_seconds=15,
         sqlite_path=root / "storage" / "history.sqlite",
@@ -57,7 +58,7 @@ def test_main_with_token_starts_polling(monkeypatch):
     monkeypatch.setattr(
         controller,
         "environment_paths",
-        lambda: {"db": Path("/tmp/db.sqlite"), "root": Path("/tmp")},
+        lambda: {"db": Path("/tmp/db.sqlite"), "root": Path("/tmp"), "recon_output": Path("/tmp/storage/recon")},
     )
     monkeypatch.setattr(controller, "init_db", lambda _db: None)
     monkeypatch.setattr(controller, "Application", _DummyApplication)

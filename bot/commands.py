@@ -126,7 +126,12 @@ def cancel_job(db_path: Path, job_id: int, chat_id: int) -> tuple[bool, str]:
         return True, "canceled"
 
 
-def delete_job(db_path: Path, recon_root: Path, job_id: int, chat_id: int) -> tuple[bool, str, list[str]]:
+def delete_job(
+    db_path: Path,
+    recon_output_dir: Path,
+    job_id: int,
+    chat_id: int,
+) -> tuple[bool, str, list[str]]:
     """Delete a job and remove matching artifact directories."""
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
@@ -144,8 +149,7 @@ def delete_job(db_path: Path, recon_root: Path, job_id: int, chat_id: int) -> tu
         if run_dir:
             candidates.append(Path(run_dir))
 
-        recon_dir = recon_root / "storage" / "recon"
-        candidates.extend(recon_dir.glob(f"*_job{job_id}"))
+        candidates.extend(recon_output_dir.glob(f"*_job{job_id}"))
 
         removed_paths: list[str] = []
         seen: set[str] = set()
@@ -246,6 +250,7 @@ def environment_paths() -> dict[str, Path]:
     settings = load_settings()
     return {
         "root": settings.recon_root,
+        "recon_output": settings.recon_output_dir,
         "db": settings.sqlite_path,
         "scope": settings.scope_file,
         "tools": settings.tools_file,
