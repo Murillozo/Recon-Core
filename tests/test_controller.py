@@ -35,8 +35,10 @@ class _DummyApplication:
 def _settings(token: str | None) -> AppSettings:
     root = Path("/tmp/recon-core")
     return AppSettings(
+        config_file=root / "config" / "app.yml",
         recon_root=root,
         recon_output_dir=root / "storage" / "recon",
+        recon_output_raw="storage/recon",
         telegram_bot_token=token,
         worker_poll_seconds=15,
         sqlite_path=root / "storage" / "history.sqlite",
