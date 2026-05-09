@@ -78,3 +78,30 @@ def test_single_instance_lock_raises_when_already_locked(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError, match="already running"):
         with controller.single_instance_lock(lock_file):
             pass
+
+
+def test_recon_output_status_message_ok(monkeypatch, tmp_path):
+    recon_dir = tmp_path / "storage" / "recon"
+    recon_dir.mkdir(parents=True)
+    monkeypatch.setattr(controller, "environment_paths", lambda: {"recon_output": recon_dir})
+
+    message = controller.recon_output_status_message()
+    assert "recon_output válido" in message
+    assert str(recon_dir) in message
+
+
+def test_recon_output_status_message_when_file(monkeypatch, tmp_path):
+    not_dir = tmp_path / "recon-output.txt"
+    not_dir.write_text("x", encoding="utf-8")
+    monkeypatch.setattr(controller, "environment_paths", lambda: {"recon_output": not_dir})
+
+    message = controller.recon_output_status_message()
+    assert "inválido" in message
+
+
+def test_recon_output_status_message_missing(monkeypatch, tmp_path):
+    missing = tmp_path / "missing" / "recon"
+    monkeypatch.setattr(controller, "environment_paths", lambda: {"recon_output": missing})
+
+    message = controller.recon_output_status_message()
+    assert "não encontrado" in message

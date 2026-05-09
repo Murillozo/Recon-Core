@@ -49,6 +49,25 @@ HELP_TEXT = (
 )
 
 
+def recon_output_status_message() -> str:
+    """Return a status message validating configured recon_output path."""
+    recon_output = environment_paths()["recon_output"]
+
+    if recon_output.exists() and recon_output.is_dir():
+        return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>"
+
+    if recon_output.exists() and not recon_output.is_dir():
+        return (
+            "❌ recon_output inválido: o caminho existe, mas não é um diretório.\n"
+            f"configurado: <code>{html.escape(str(recon_output))}</code>"
+        )
+
+    return (
+        "⚠️ recon_output não encontrado no disco.\n"
+        f"configurado: <code>{html.escape(str(recon_output))}</code>"
+    )
+
+
 def required_bot_token() -> str:
     """Return configured Telegram token or raise a clear startup error."""
     token = load_settings().telegram_bot_token
@@ -84,6 +103,7 @@ def single_instance_lock(lock_file: Path) -> Iterator[None]:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(HELP_TEXT, parse_mode="Markdown")
+    await update.message.reply_text(recon_output_status_message(), parse_mode="HTML")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
