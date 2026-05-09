@@ -51,20 +51,23 @@ HELP_TEXT = (
 
 def recon_output_status_message() -> str:
     """Return a status message validating configured recon_output path."""
-    recon_output = environment_paths()["recon_output"]
+    paths = environment_paths()
+    recon_output = paths["recon_output"]
+    config_file = load_settings().config_file
+    source = f"\nconfig: <code>{html.escape(str(config_file))}</code>"
 
     if recon_output.exists() and recon_output.is_dir():
-        return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>"
+        return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>{source}"
 
     if recon_output.exists() and not recon_output.is_dir():
         return (
             "❌ recon_output inválido: o caminho existe, mas não é um diretório.\n"
-            f"configurado: <code>{html.escape(str(recon_output))}</code>"
+            f"configurado: <code>{html.escape(str(recon_output))}</code>{source}"
         )
 
     return (
         "⚠️ recon_output não encontrado no disco.\n"
-        f"configurado: <code>{html.escape(str(recon_output))}</code>"
+        f"configurado: <code>{html.escape(str(recon_output))}</code>{source}"
     )
 
 

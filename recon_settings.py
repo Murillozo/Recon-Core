@@ -15,6 +15,7 @@ import yaml
 
 @dataclass
 class AppSettings:
+    config_file: Path
     recon_root: Path
     recon_output_dir: Path
     telegram_bot_token: str | None
@@ -35,7 +36,8 @@ def _load_yaml(path: Path) -> dict:
 def _resolve_path(raw_value: str | os.PathLike[str] | None, base: Path, default: Path) -> Path:
     if raw_value in (None, ""):
         return default
-    path = Path(raw_value)
+    expanded = os.path.expandvars(os.path.expanduser(str(raw_value)))
+    path = Path(expanded)
     if path.is_absolute():
         return path
     return (base / path).resolve()
@@ -84,6 +86,7 @@ def load_settings() -> AppSettings:
     )
 
     return AppSettings(
+        config_file=config_file.resolve(),
         recon_root=root,
         recon_output_dir=recon_output_dir,
         telegram_bot_token=token,
