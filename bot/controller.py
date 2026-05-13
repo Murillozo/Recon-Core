@@ -53,8 +53,17 @@ def recon_output_status_message() -> str:
     """Return a status message validating configured recon_output path."""
     paths = environment_paths()
     recon_output = paths["recon_output"]
-    config_file = load_settings().config_file
+    settings = load_settings()
+    config_file = settings.config_file
     source = f"\nconfig: <code>{html.escape(str(config_file))}</code>"
+    if settings.recon_output_raw:
+        raw = settings.recon_output_raw
+        is_relative = not Path(raw).is_absolute()
+        if is_relative:
+            source += (
+                "\nobs: paths.recon_output está relativo no YAML "
+                f"(<code>{html.escape(raw)}</code>) e será resolvido a partir de recon_root."
+            )
 
     if recon_output.exists() and recon_output.is_dir():
         return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>{source}"

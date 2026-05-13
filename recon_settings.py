@@ -18,6 +18,7 @@ class AppSettings:
     config_file: Path
     recon_root: Path
     recon_output_dir: Path
+    recon_output_raw: str | None
     telegram_bot_token: str | None
     worker_poll_seconds: int
     sqlite_path: Path
@@ -89,6 +90,7 @@ def load_settings() -> AppSettings:
         config_file=config_file.resolve(),
         recon_root=root,
         recon_output_dir=recon_output_dir,
+        recon_output_raw=str(paths_cfg.get("recon_output")) if paths_cfg.get("recon_output") not in (None, "") else None,
         telegram_bot_token=token,
         worker_poll_seconds=poll,
         sqlite_path=sqlite_path,
