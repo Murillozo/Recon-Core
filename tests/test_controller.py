@@ -35,8 +35,10 @@ class _DummyApplication:
 def _settings(token: str | None) -> AppSettings:
     root = Path("/tmp/recon-core")
     return AppSettings(
+        config_file=root / "config" / "app.yml",
         recon_root=root,
         recon_output_dir=root / "storage" / "recon",
+        recon_output_raw="storage/recon",
         telegram_bot_token=token,
         worker_poll_seconds=15,
         sqlite_path=root / "storage" / "history.sqlite",
@@ -105,3 +107,12 @@ def test_recon_output_status_message_missing(monkeypatch, tmp_path):
 
     message = controller.recon_output_status_message()
     assert "não encontrado" in message
+
+
+def test_update_recon_output_in_config(tmp_path):
+    cfg = tmp_path / "app.yml"
+    cfg.write_text("paths:\n  recon_output: storage/recon\n", encoding="utf-8")
+
+    controller.update_recon_output_in_config(cfg, "/tmp/new-recon")
+    content = cfg.read_text(encoding="utf-8")
+    assert "recon_output: /tmp/new-recon" in content

@@ -8,7 +8,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
-from urllib.parse import quote
+import yaml
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -44,6 +44,9 @@ HELP_TEXT = (
     "- `/status <job_id>` mostra status detalhado de um job\n"
     "- `/jobs` lista seus últimos jobs\n"
     "- `/feitos` lista jobs concluídos com caminho da pasta\n"
+    "- `/reconoutput` mostra o caminho atual e status do recon_output\n"
+    "- `/setreconoutput <caminho>` solicita alteração do recon_output\n"
+    "- `/confirmar_reconoutput sim` confirma a alteração pendente\n"
     "- `/help` mostra esta ajuda\n\n"
     "Perfis: passive, balanced, deep"
 )
@@ -51,21 +54,42 @@ HELP_TEXT = (
 
 def recon_output_status_message() -> str:
     """Return a status message validating configured recon_output path."""
-    recon_output = environment_paths()["recon_output"]
+    paths = environment_paths()
+    recon_output = paths["recon_output"]
+    settings = load_settings()
+    config_file = settings.config_file
+    source = f"\nconfig: <code>{html.escape(str(config_file))}</code>"
+    if settings.recon_output_raw:
+        raw = settings.recon_output_raw
+        is_relative = not Path(raw).is_absolute()
+        if is_relative:
+            source += (
+                "\nobs: paths.recon_output está relativo no YAML "
+                f"(<code>{html.escape(raw)}</code>) e será resolvido a partir de recon_root."
+            )
 
     if recon_output.exists() and recon_output.is_dir():
-        return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>"
+        return f"✅ recon_output válido: <code>{html.escape(str(recon_output))}</code>{source}"
 
     if recon_output.exists() and not recon_output.is_dir():
         return (
             "❌ recon_output inválido: o caminho existe, mas não é um diretório.\n"
-            f"configurado: <code>{html.escape(str(recon_output))}</code>"
+            f"configurado: <code>{html.escape(str(recon_output))}</code>{source}"
         )
 
     return (
         "⚠️ recon_output não encontrado no disco.\n"
-        f"configurado: <code>{html.escape(str(recon_output))}</code>"
+        f"configurado: <code>{html.escape(str(recon_output))}</code>{source}"
     )
+
+
+def update_recon_output_in_config(config_file: Path, new_path: str) -> None:
+    cfg: dict = {}
+    if config_file.exists():
+        cfg = yaml.safe_load(config_file.read_text(encoding="utf-8")) or {}
+    cfg.setdefault("paths", {})
+    cfg["paths"]["recon_output"] = new_path
+    config_file.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def required_bot_token() -> str:
@@ -108,6 +132,59 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(HELP_TEXT, parse_mode="Markdown")
+
+
+async def reconoutput(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(recon_output_status_message(), parse_mode="HTML")
+
+
+async def setreconoutput(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.message.reply_text("Formato inválido. Exemplo: /setreconoutput /home/user/recon")
+        return
+
+    raw_path = " ".join(context.args).strip()
+    candidate = Path(os.path.expandvars(os.path.expanduser(raw_path)))
+    if not candidate.is_absolute():
+        await update.message.reply_text("Use um caminho absoluto, ~ ou $HOME para evitar ambiguidade.")
+        return
+    if not candidate.exists() or not candidate.is_dir():
+        await update.message.reply_text(
+            "⚠️ recon_output não encontrado no disco.\n"
+            f"configurado: <code>{html.escape(str(candidate))}</code>",
+            parse_mode="HTML",
+        )
+        return
+
+    context.chat_data["pending_recon_output"] = str(candidate)
+    await update.message.reply_text(
+        "Caminho válido detectado.\n"
+        f"Novo recon_output: <code>{html.escape(str(candidate))}</code>\n"
+        "Confirma alteração no config/app.yml?\n"
+        "Responda com: /confirmar_reconoutput sim",
+        parse_mode="HTML",
+    )
+
+
+async def confirmar_reconoutput(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args or context.args[0].lower() != "sim":
+        await update.message.reply_text("Confirmação inválida. Use: /confirmar_reconoutput sim")
+        return
+    pending = context.chat_data.get("pending_recon_output")
+    if not pending:
+        await update.message.reply_text("Não há alteração pendente. Use /setreconoutput primeiro.")
+        return
+
+    settings = load_settings()
+    update_recon_output_in_config(settings.config_file, pending)
+    context.chat_data.pop("pending_recon_output", None)
+    await update.message.reply_text(
+        "✅ recon_output atualizado no arquivo de configuração.\n"
+        f"config: <code>{html.escape(str(settings.config_file))}</code>\n"
+        f"novo valor: <code>{html.escape(pending)}</code>\n"
+        "Reinicie o worker para aplicar nos próximos jobs.",
+        parse_mode="HTML",
+    )
 
 
 async def site(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -295,6 +372,9 @@ def main() -> None:
     app.add_handler(CommandHandler("status", status))
     app.add_handler(CommandHandler("jobs", jobs))
     app.add_handler(CommandHandler("feitos", feitos))
+    app.add_handler(CommandHandler("reconoutput", reconoutput))
+    app.add_handler(CommandHandler("setreconoutput", setreconoutput))
+    app.add_handler(CommandHandler("confirmar_reconoutput", confirmar_reconoutput))
 
     lock_file = logs_dir / "bot.controller.lock"
     with single_instance_lock(lock_file):
