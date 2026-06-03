@@ -38,3 +38,36 @@ Automação modular de recon com bot Telegram + worker em fila SQLite.
 ## Banco SQLite
 
 Tabela `jobs` com status: `pending`, `running`, `completed`, `failed`, `canceled`.
+
+## Instalação como serviço systemd
+
+O repositório inclui um instalador para publicar o bot e o worker como serviços Linux. Execute a partir da raiz do projeto:
+
+```bash
+sudo TELEGRAM_BOT_TOKEN="<seu_token>" ./scripts/install-systemd.sh
+```
+
+Por padrão, o script:
+
+- copia o projeto para `/opt/recon-core`;
+- cria/usa o usuário de serviço `recon`;
+- cria a venv em `/opt/recon-core/.venv`;
+- instala `requirements.txt`;
+- cria `/opt/recon-core/.env` com `RECON_ROOT` e, se informado, `TELEGRAM_BOT_TOKEN`;
+- cria os serviços `recon-bot.service` e `recon-worker.service` em `/etc/systemd/system/`;
+- habilita e inicia os dois serviços.
+
+Opções úteis:
+
+```bash
+sudo ./scripts/install-systemd.sh --install-dir /srv/recon-core --user recon
+sudo ./scripts/install-systemd.sh --no-start
+sudo ./scripts/install-systemd.sh --skip-copy
+```
+
+Depois da instalação, verifique:
+
+```bash
+sudo systemctl status recon-bot.service recon-worker.service
+sudo journalctl -u recon-bot.service -u recon-worker.service -f
+```
